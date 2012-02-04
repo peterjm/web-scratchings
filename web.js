@@ -21,11 +21,24 @@ app.configure('production', function() {
   app.use(express.errorHandler());
 });
 
+app.all('*', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "GET, POST, PUT, DELETE, OPTIONS");
+  next();
+});
+
 app.get('/', function(req, res) {
+  res.contentType('html');
   res.render('index.html.ejs');
 });
 
+app.get('/drawing.js', function(req, res) {
+  res.contentType('js');
+  res.render('drawing.js.ejs', {host: req.header('host')});
+});
+
 app.get('/config', function(req, res) {
+  res.contentType('html');
   res.render('config.html.ejs');
 });
 
@@ -53,15 +66,13 @@ app.get('/lines.json', function(req, res) {
   });
 });
 
-//post '/lines.json' do
-//  current_line_set.append JSON.parse(params[:points])
-//  ''
-//end
+app.post('/lines.json', function(req, res) {
+  //current_line_set.append JSON.parse(params[:points])
+});
 
-//delete '/lines' do
-//  LineSet.clear!
-//  ''
-//end
+app.delete('/lines', function(req, res) {
+  //LineSet.clear!
+});
 
 var port = process.env.PORT || 3000;
 app.listen(port, function() {
