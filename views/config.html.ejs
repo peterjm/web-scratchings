@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Sketchpad Admin</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+    <form action="/config" method="post" id="update">
+      <input type="hidden" name="_method" value="put" />
+      <div>
+        <label for="current_thickness">Thickness of current line:</label>
+        <input type="text" name="current_thickness" value="<%= process.env['ARTSY_CURRENT_THICKNESS'] %>"/>
+      </div>
+
+      <div>
+        <label for="old_thickness">Thickness of most recent old line:</label>
+        <input type="text" name="old_thickness" value="<%= process.env['ARTSY_OLD_THICKNESS'] %>"/>
+      </div>
+
+      <div>
+        <label for="decay">Decay rate of old-line thickness:</label>
+        <input type="text" name="decay" value="<%= process.env['ARTSY_THICKNESS_DECAY'] %>"/>
+      </div>
+
+      <input type="submit" value="Update Values" name="submit"/>
+    </form>
+
+    <form action="/lines" method="post" id="clear" data-remote="true">
+      <input type="hidden" name="_method" value="delete" />
+      <p>This will delete all existing lines. There is no backup. Use only for testing purposes.</p>
+      <input type="submit" value="Clear All Lines" name="clear"/>
+    </form>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+    <script src="jquery-ujs.js" type="text/javascript"></script>
+    <script src="admin.js" type="text/javascript"></script>
+  </body>
+</html>

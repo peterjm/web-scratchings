@@ -1,0 +1,13 @@
+body {
+  background-color:#ffffff;
+  margin: 0px;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+form p {
+  margin: 0;
+  padding: 0;
+}
