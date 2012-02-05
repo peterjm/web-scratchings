@@ -1,4 +1,26 @@
 var express = require('express');
+var _ = require('underscore')._;
+var redis_lib = require('redis');
+var LineSet = require('./lineset').LineSet;
+var url = require('url');
+
+var redis;
+function setup_redis(redis_url) {
+  var parsed_url = url.parse(redis_url);
+  redis = redis_lib.createClient(parsed_url.port, parsed_url.hostname);
+}
+
+var _current_line_set;
+function current_line_set() {
+  if (!_current_line_set) {
+    _current_line_set = new LineSet(session_id(), redis);
+  }
+  return _current_line_set;
+}
+
+function session_id() {
+  return 1;
+}
 
 var app = express.createServer();
 
@@ -7,8 +29,11 @@ app.use(express.bodyParser());
 app.use(express.methodOverride());
 
 app.configure('development', function() {
+  setup_redis('http://localhost:6379');
+
   app.use(express.static(__dirname + '/public'));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+  app.use(express.logger());
 
   process.env['ARTSY_CURRENT_THICKNESS'] = 0.7
   process.env['ARTSY_OLD_THICKNESS'] = 0.3
@@ -16,6 +41,8 @@ app.configure('development', function() {
 });
 
 app.configure('production', function() {
+  setup_redis(process.env['REDISTOGO_URL']);
+
   var oneYear = 365 * 24 * 3600 * 1000; // milliseconds
   app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
   app.use(express.errorHandler());
@@ -60,19 +87,44 @@ app.get('/config.json', function(req, res) {
 
 app.get('/lines.json', function(req, res) {
   res.contentType('json');
-  res.send({
-    current: [],//current_line_set,
-    rest: [[]]//LineSet.all.without(current_line_set)
+  current_line_set().points(function(current_points) {
+    LineSet.all(null, redis, function(linesets) {
+      if (linesets.length == 0) {
+        var points = {
+          current: current_points,
+          rest: []
+        };
+        res.send(points);
+      }
+      else {
+        var count = 0;
+        var other_points = new Array(linesets.length);
+        _.each(linesets, function(lineset, index) {
+          lineset.points(function(points){
+            other_points[index] = points;
+            count++;
+            if (count == linesets.length) {
+              var points = {
+                current: current_points,
+                rest: other_points
+              };
+              res.send(points);
+            }
+          });
+        });
+      }
+    });
   });
 });
 
 app.post('/lines.json', function(req, res) {
-  //current_line_set.append JSON.parse(params[:points])
+  var points = JSON.parse(req.body.points);
+  current_line_set().append(points);
   res.send(''); // render nothing
 });
 
 app.delete('/lines', function(req, res) {
-  //LineSet.clear!
+  LineSet.clear(redis);
   res.send(''); // render nothing
 });
 
