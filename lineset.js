@@ -45,7 +45,7 @@ LineSet.prototype.clear = function() {
   this.redis.zrem(this.constructor.key, this.key);
 };
 LineSet.prototype.equals = function(other) {
-  return this.key == other.key;
+  return this.key === other.key;
 };
 
 LineSet.key = 'points_keys';

@@ -11,12 +11,8 @@ function setup_redis(redis_url) {
   redis = redis_lib.createClient(parsed_url.port, parsed_url.hostname);
 }
 
-var _current_line_set;
 function current_line_set(session) {
-  if (!_current_line_set) {
-    _current_line_set = new LineSet(session.id, redis);
-  }
-  return _current_line_set;
+  return new LineSet(session.id, redis);
 }
 
 function random_number(n) {
@@ -59,14 +55,6 @@ app.configure('production', function() {
 });
 
 app.all('*', function(req, res, next) {
-  if (!req.session.id) {
-    req.session.id = ''+random_number(100000000000);
-  }
-  next();
-});
-
-
-app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "GET, POST, PUT, DELETE, OPTIONS");
   next();
@@ -105,8 +93,10 @@ app.get('/config.json', function(req, res) {
 
 app.get('/lines.json', function(req, res) {
   res.contentType('json');
-  current_line_set(req.session).points(function(current_points) {
+  var cls = current_line_set(req.session);
+  cls.points(function(current_points) {
     LineSet.all(null, redis, function(linesets) {
+      linesets = _.reject(linesets, function(l) { return l.equals(cls); });
       if (linesets.length == 0) {
         var points = {
           current: current_points,
