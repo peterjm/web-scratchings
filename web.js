@@ -68,10 +68,12 @@ app.get('/lines.json', function(req, res) {
 
 app.post('/lines.json', function(req, res) {
   //current_line_set.append JSON.parse(params[:points])
+  res.send(''); // render nothing
 });
 
 app.delete('/lines', function(req, res) {
   //LineSet.clear!
+  res.send(''); // render nothing
 });
 
 var port = process.env.PORT || 3000;
