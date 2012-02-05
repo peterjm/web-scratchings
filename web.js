@@ -3,6 +3,7 @@ var _ = require('underscore')._;
 var redis_lib = require('redis');
 var LineSet = require('./lineset').LineSet;
 var url = require('url');
+var RedisStore = require('connect-redis')(express);
 
 var redis;
 function setup_redis(redis_url) {
@@ -11,15 +12,15 @@ function setup_redis(redis_url) {
 }
 
 var _current_line_set;
-function current_line_set() {
+function current_line_set(session) {
   if (!_current_line_set) {
-    _current_line_set = new LineSet(session_id(), redis);
+    _current_line_set = new LineSet(session.id, redis);
   }
   return _current_line_set;
 }
 
-function session_id() {
-  return 1;
+function random_number(n) {
+  return Math.floor(Math.random() * (n+1));
 }
 
 var app = express.createServer();
@@ -27,6 +28,7 @@ var app = express.createServer();
 app.set('view options', { layout: false });
 app.use(express.bodyParser());
 app.use(express.methodOverride());
+app.use(express.cookieParser());
 
 app.configure('development', function() {
   setup_redis('http://localhost:6379');
@@ -34,6 +36,10 @@ app.configure('development', function() {
   app.use(express.static(__dirname + '/public'));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
   app.use(express.logger());
+  app.use(express.session({
+    secret: "session secret",
+    store: new RedisStore({client: redis})
+  }));
 
   process.env['ARTSY_CURRENT_THICKNESS'] = 0.7
   process.env['ARTSY_OLD_THICKNESS'] = 0.3
@@ -46,7 +52,19 @@ app.configure('production', function() {
   var oneYear = 365 * 24 * 3600 * 1000; // milliseconds
   app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
   app.use(express.errorHandler());
+  app.use(express.session({
+    secret: process.env['ARTSY_SESSION_SECRET'],
+    store: new RedisStore({client: redis})
+  }));
 });
+
+app.all('*', function(req, res, next) {
+  if (!req.session.id) {
+    req.session.id = ''+random_number(100000000000);
+  }
+  next();
+});
+
 
 app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -87,7 +105,7 @@ app.get('/config.json', function(req, res) {
 
 app.get('/lines.json', function(req, res) {
   res.contentType('json');
-  current_line_set().points(function(current_points) {
+  current_line_set(req.session).points(function(current_points) {
     LineSet.all(null, redis, function(linesets) {
       if (linesets.length == 0) {
         var points = {
@@ -119,7 +137,7 @@ app.get('/lines.json', function(req, res) {
 
 app.post('/lines.json', function(req, res) {
   var points = JSON.parse(req.body.points);
-  current_line_set().append(points);
+  current_line_set(req.session).append(points);
   res.send(''); // render nothing
 });
 

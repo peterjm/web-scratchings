@@ -72,7 +72,6 @@ LineSet.all_keys = function(n, redis, callback) {
 };
 LineSet.all = function(n, redis, callback) {
   this.all_keys(n, redis, function(keys) {
-    console.log('keys: '+keys);
     var linesets = _.map(keys, function(k) { return new LineSet(k, redis); });
     callback(linesets);
   });
