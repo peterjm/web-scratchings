@@ -31,7 +31,7 @@ app.configure('development', function() {
   app.use(express.logger());
   app.use(express.session({
     secret: "session secret",
-    cookie: { path: '/', httpOnly: false, maxAge: 14400000 }
+    cookie: { path: '/', httpOnly: false, maxAge: 14400000 },
     store: new RedisStore({client: redis})
   }));
 
@@ -49,7 +49,7 @@ app.configure('production', function() {
   app.use(express.logger());
   app.use(express.session({
     secret: process.env.ARTSY_SESSION_SECRET,
-    cookie: { path: '/', httpOnly: false, maxAge: 14400000 }
+    cookie: { path: '/', httpOnly: false, maxAge: 14400000 },
     store: new RedisStore({client: redis})
   }));
 });
@@ -129,6 +129,9 @@ app.post('/lines.json', function(req, res) {
   var points = JSON.parse(req.body.points);
   current_line_set(req.session).append(points);
   console.log("Session: "+req.session.id);
+  for (var k in req.cookies) {
+  console.log("Cookies["+k+"]: "+req.cookies[k]);
+  }
   res.send(''); // render nothing
 });
 
