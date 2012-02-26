@@ -15,12 +15,6 @@ function to_url(path) {
 function setup() {
   insert_canvas();
 
-  $.ajaxSetup({
-    beforeSend: function(xhr) {
-       xhr.withCredentials = true;
-    });
-  });
-
   $.getJSON(to_url('config.json'), function(data) {
     if (data) {
       config = data;
@@ -118,7 +112,14 @@ function setup_canvas() {
 function upload_points() {
   if (!new_points.length) { return; }
 
-  $.post(to_url('lines.json'), {points: JSON.stringify(new_points)}, function(){});
+  $.ajax({
+    type: 'POST',
+    url: to_url('lines.json'),
+    data: {points: JSON.stringify(new_points)},
+    beforeSend: function(xhr) {
+      xhr.withCredentials = true;
+    }
+  });
   new_points = [];
 }
 
