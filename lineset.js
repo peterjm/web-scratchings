@@ -1,6 +1,6 @@
 var _ = require('underscore');
 
-function LineSet(k, redis) {
+function LineSet(k, redis, skip_clear_line) {
   this.key = 'points_' + k;
   this.redis = redis;
 
@@ -8,10 +8,12 @@ function LineSet(k, redis) {
   that.redis.zrevrank(that.constructor.key, k, function(err, rank) {
     if (rank == null) {
       that.redis.zadd(that.constructor.key, Date.now(), k, function() {
-        that.redis.llen(that.key, function(err, len) {
-          if (len <= 0) {
-            that.clear_line();
-          }
+        if (!skip_clear_line) {
+          that.redis.llen(that.key, function(err, len) {
+            if (len <= 0) {
+              that.clear_line();
+            }
+          });
         });
       });
     }
@@ -72,7 +74,7 @@ LineSet.all_keys = function(n, redis, callback) {
 };
 LineSet.all = function(n, redis, callback) {
   this.all_keys(n, redis, function(keys) {
-    var linesets = _.map(keys, function(k) { return new LineSet(k, redis); });
+    var linesets = _.map(keys, function(k) { return new LineSet(k, redis, true); });
     callback(linesets);
   });
 };
