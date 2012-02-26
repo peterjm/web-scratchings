@@ -61,17 +61,11 @@ LineSet.clear = function(redis) {
   redis.del(this.key);
 };
 LineSet.all_keys = function(n, redis, callback) {
-  var MAX_KEYS = 100;
   var that = this;
-  n = (n==null) ? MAX_KEYS : n;
-  if (n > 0) {
-    redis.zrevrange(that.key, 0, n-1, function(err, keys) {
-      callback(keys);
-    });
-  }
-  else {
-    callback([]);
-  }
+  n = (n==null) ? -1 : n;
+  redis.zrevrange(that.key, 0, n, function(err, keys) {
+    callback(keys);
+  });
 };
 LineSet.all = function(n, redis, callback) {
   this.all_keys(n, redis, function(keys) {

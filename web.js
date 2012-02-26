@@ -4,7 +4,8 @@ var LineSet = require('./lineset').LineSet;
 var RedisStore = require('connect-redis')(express);
 var ALLOWED_CORS_ORIGINS = [
   'http://prtest.quietbabylon.com'
-]
+];
+var MAX_LINES = 100;
 
 var redis;
 function setup_redis(redis_url) {
@@ -99,7 +100,7 @@ app.get('/lines.json', function(req, res) {
   res.contentType('json');
   var cls = current_line_set(req.session);
   cls.points(function(current_points) {
-    LineSet.all(null, redis, function(linesets) {
+    LineSet.all(MAX_LINES, redis, function(linesets) {
       linesets = _.reject(linesets, function(l) { return l.equals(cls); });
       if (linesets.length == 0) {
         var points = {
