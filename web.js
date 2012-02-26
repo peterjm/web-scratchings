@@ -32,7 +32,6 @@ app.configure('development', function() {
 
   app.use(express.static(__dirname + '/public'));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-  //app.use(express.logger());
   app.use(express.session({
     secret: "session secret",
     store: new RedisStore({client: redis})
@@ -49,7 +48,6 @@ app.configure('production', function() {
   var oneYear = 365 * 24 * 3600 * 1000; // milliseconds
   app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
   app.use(express.errorHandler());
-  app.use(express.logger());
   app.use(express.session({
     secret: process.env.ARTSY_SESSION_SECRET,
     store: new RedisStore({client: redis})
