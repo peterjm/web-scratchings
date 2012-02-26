@@ -14,7 +14,7 @@ function LineSet(k, redis, skip_clear_line) {
               that.clear_line();
             }
           });
-        });
+        }
       });
     }
   });
