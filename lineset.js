@@ -1,6 +1,7 @@
 var _ = require('underscore');
 
 function LineSet(k, redis, skip_clear_line) {
+  this.k = k;
   this.key = 'points_' + k;
   this.redis = redis;
 
@@ -44,7 +45,7 @@ LineSet.prototype.clear_line = function() {
 };
 LineSet.prototype.clear = function() {
   this.redis.del(this.key);
-  this.redis.zrem(this.constructor.key, this.key);
+  this.redis.zrem(this.constructor.key, this.k);
 };
 LineSet.prototype.equals = function(other) {
   return this.key === other.key;
