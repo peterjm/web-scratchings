@@ -15,6 +15,12 @@ function to_url(path) {
 function setup() {
   insert_canvas();
 
+  $.ajaxSetup({
+    beforeSend: function(xhr) {
+       xhr.withCredentials = true;
+    });
+  });
+
   $.getJSON(to_url('config.json'), function(data) {
     if (data) {
       config = data;
