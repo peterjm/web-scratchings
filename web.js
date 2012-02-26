@@ -2,6 +2,9 @@ var express = require('express');
 var _ = require('underscore')._;
 var LineSet = require('./lineset').LineSet;
 var RedisStore = require('connect-redis')(express);
+var ALLOWED_CORS_ORIGINS = [
+  'http://prtest.quietbabylon.com/'
+]
 
 var redis;
 function setup_redis(redis_url) {
@@ -55,9 +58,12 @@ app.configure('production', function() {
 });
 
 app.all('*', function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://prtest.quietbabylon.com/");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  console.log(req.headers.origin);
+  if (_.include(ALLOWED_CORS_ORIGINS, req.headers.origin)) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  }
   next();
 });
 
