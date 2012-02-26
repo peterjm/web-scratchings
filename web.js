@@ -31,6 +31,7 @@ app.configure('development', function() {
   app.use(express.logger());
   app.use(express.session({
     secret: "session secret",
+    cookie: { path: '/', httpOnly: false, maxAge: 14400000 }
     store: new RedisStore({client: redis})
   }));
 
@@ -48,6 +49,7 @@ app.configure('production', function() {
   app.use(express.logger());
   app.use(express.session({
     secret: process.env.ARTSY_SESSION_SECRET,
+    cookie: { path: '/', httpOnly: false, maxAge: 14400000 }
     store: new RedisStore({client: redis})
   }));
 });
