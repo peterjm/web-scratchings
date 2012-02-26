@@ -31,10 +31,9 @@ app.configure('development', function() {
 
   app.use(express.static(__dirname + '/public'));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-  app.use(express.logger());
+  //app.use(express.logger());
   app.use(express.session({
     secret: "session secret",
-    cookie: { path: '/', httpOnly: false, maxAge: 14400000 },
     store: new RedisStore({client: redis})
   }));
 
@@ -52,13 +51,11 @@ app.configure('production', function() {
   app.use(express.logger());
   app.use(express.session({
     secret: process.env.ARTSY_SESSION_SECRET,
-    cookie: { path: '/', httpOnly: false, maxAge: 14400000 },
     store: new RedisStore({client: redis})
   }));
 });
 
 app.all('*', function(req, res, next) {
-  console.log(req.headers.origin);
   if (_.include(ALLOWED_CORS_ORIGINS, req.headers.origin)) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Credentials", "true");
@@ -135,7 +132,6 @@ app.get('/lines.json', function(req, res) {
 app.post('/lines.json', function(req, res) {
   var points = JSON.parse(req.body.points);
   current_line_set(req.session).append(points);
-  console.log("Session: "+req.session.id);
   res.send(''); // render nothing
 });
 
