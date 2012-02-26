@@ -1,4 +1,4 @@
-var _ = require('underscore');
+var _ = require('underscore')._;
 
 function LineSet(k, redis, skip_clear_line) {
   this.k = k;
