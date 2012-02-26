@@ -116,9 +116,7 @@ function upload_points() {
     type: 'POST',
     url: to_url('lines.json'),
     data: {points: JSON.stringify(new_points)},
-    beforeSend: function(xhr) {
-      xhr.withCredentials = true;
-    }
+    xhrFields: { withCredentials: true }
   });
   new_points = [];
 }
