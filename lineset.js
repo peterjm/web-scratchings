@@ -65,7 +65,7 @@ LineSet.all_keys = function(n, redis, callback) {
   var that = this;
   n = (n==null) ? MAX_KEYS : n;
   if (n > 0) {
-    redis.zrange(that.key, 0, n-1, function(err, keys) {
+    redis.zrevrange(that.key, 0, n-1, function(err, keys) {
       callback(keys);
     });
   }
