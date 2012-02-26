@@ -3,7 +3,7 @@ var _ = require('underscore')._;
 var LineSet = require('./lineset').LineSet;
 var RedisStore = require('connect-redis')(express);
 var ALLOWED_CORS_ORIGINS = [
-  'http://prtest.quietbabylon.com/'
+  'http://prtest.quietbabylon.com'
 ]
 
 var redis;
