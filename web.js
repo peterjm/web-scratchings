@@ -10,6 +10,9 @@ var MAX_LINES = 100;
 var redis;
 function setup_redis(redis_url) {
   redis = require('redis-url').createClient(redis_url);
+  redis.on("error", function(err){
+    console.log("Redis Error: "+err)
+  });
 }
 
 function current_line_set(session) {
