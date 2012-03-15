@@ -1,19 +1,21 @@
 var connection,
-    context,
     oldMouseX = 0,
     oldMouseY = 0,
     old_points = [],
     current_points = [],
     new_points = [],
     config,
-    canvas;
+    canvas,
+    context,
+    old_canvas,
+    old_context;
 
 function to_url(path) {
   return 'http://<%= host %>/' + path;
 }
 
 function setup() {
-  insert_canvas();
+  insert_canvases();
 
   $.ajaxSetup({
     xhrFields: { withCredentials: true }
@@ -22,7 +24,7 @@ function setup() {
   $.getJSON(to_url('config.json'), function(data) {
     if (data) {
       config = data;
-      setup_canvas();
+      setup_canvases();
 
       $.getJSON(to_url('lines.json'), function(data) {
         if (data) {
@@ -40,7 +42,7 @@ function setup() {
     var mouseX = event.clientX - canvas.offsetLeft,
         mouseY = event.clientY - canvas.offsetTop;
 
-    draw_line(oldMouseX, oldMouseY, mouseX, mouseY, config.current_thickness);
+    draw_line(oldMouseX, oldMouseY, mouseX, mouseY, config.current_thickness, context);
 
     current_points.push(mouseX);
     current_points.push(mouseY);
@@ -52,7 +54,7 @@ function setup() {
   });
 
   $(window).resize(function(event) {
-    setup_canvas();
+    setup_canvases();
     redraw();
   });
 
@@ -60,57 +62,69 @@ function setup() {
 }
 
 function redraw() {
-  draw_all_lines(current_points, config.current_thickness);
+  draw_all_lines(current_points, config.current_thickness, context);
   var thickness = config.old_thickness;
   for(var i = 0; i < old_points.length; i++) {
     if (thickness <= 0) { break; }
 
-    draw_all_lines(old_points[i], thickness);
+    draw_all_lines(old_points[i], thickness, old_context);
     thickness -= config.decay;
   }
 }
 
-function draw_all_lines(points, thickness) {
+function draw_all_lines(points, thickness, ctxt) {
   if (!points.length) { return; }
 
   oldX = points[0];
   oldY = points[1];
   for(var i = 0; i < points.length; i+=2) {
     x = points[i], y = points[i+1]
-    draw_line(oldX, oldY, x, y, thickness);
+    draw_line(oldX, oldY, x, y, thickness, ctxt);
     oldX = x, oldY = y;
   }
 }
 
-function draw_line(x1, y1, x2, y2, thickness) {
+function draw_line(x1, y1, x2, y2, thickness, ctxt) {
   if (!valid(x1) || !valid(y1) || !valid(x2) || !valid(y2)) { return; }
 
   var dx = x2 - x1,
       dy = y2 - y1,
       d = Math.sqrt(dx * dx + dy * dy) * 0.02;
 
-  context.lineWidth = thickness;
-  context.strokeStyle = 'rgba(0, 0, 0, ' + (0.7 - d) + ')';
-  context.beginPath();
-  context.moveTo(x1, y1);
-  context.lineTo(x2, y2);
-  context.closePath();
-  context.stroke();
+  ctxt.lineWidth = thickness;
+  ctxt.strokeStyle = 'rgba(0, 0, 0, ' + (0.7 - d) + ')';
+  ctxt.beginPath();
+  ctxt.moveTo(x1, y1);
+  ctxt.lineTo(x2, y2);
+  ctxt.closePath();
+  ctxt.stroke();
 }
 
-function insert_canvas() {
-  var $canvas = $('<canvas id="canvas"></canvas>');
+function insert_canvases() {
+  canvas = insert_canvas('canvas');
+  old_canvas = insert_canvas('old-canvas', function($canvas){
+    $canvas.css({'z-index': '-1'});
+  });
+}
+
+function insert_canvas(id, callback) {
+  var $canvas = $('<canvas id="'+id+'"></canvas>');
   $('body').append($canvas);
   $($canvas).css({ position: 'fixed', top: 0, left: 0, 'pointer-events': 'none' });
+  if (callback) { callback($canvas); }
 
-  canvas = document.getElementById('canvas');
+  return document.getElementById(id);
 }
 
-function setup_canvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function setup_canvases() {
+  context = setup_canvas(canvas);
+  old_context = setup_canvas(old_canvas);
+}
 
-  context = canvas.getContext('2d');
+function setup_canvas(c) {
+  c.width = window.innerWidth;
+  c.height = window.innerHeight;
+  return c.getContext('2d');
 }
 
 function upload_points() {
