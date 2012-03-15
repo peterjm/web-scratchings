@@ -9,14 +9,13 @@ var MAX_LINES = 100;
 var redis;
 
 function setup_redis(redis_url) {
-  return require('redis-url')
-    .createClient(redis_url)
-    .on("error", function(err) {
-      console.log("Redis Error: "+err)
-    });
-    .on("reply error", function(err) {
-      console.log("Redis Error: "+err)
-    });
+  return require('redis-url').createClient(redis_url);
+  redis.on("error", function(err) {
+    console.log("Redis Error: "+err)
+  }).on("reply error", function(err) {
+    console.log("Redis Reply Error: "+err)
+  });
+  return redis;
 }
 
 function current_line_set(session) {
