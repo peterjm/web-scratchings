@@ -6,13 +6,17 @@ var ALLOWED_CORS_ORIGINS = [
   'http://prtest.quietbabylon.com'
 ];
 var MAX_LINES = 100;
-
 var redis;
+
 function setup_redis(redis_url) {
-  redis = require('redis-url').createClient(redis_url);
-  redis.on("error", function(err){
-    console.log("Redis Error: "+err)
-  });
+  return require('redis-url')
+    .createClient(redis_url)
+    .on("error", function(err) {
+      console.log("Redis Error: "+err)
+    });
+    .on("reply error", function(err) {
+      console.log("Redis Error: "+err)
+    });
 }
 
 function current_line_set(session) {
@@ -31,7 +35,7 @@ app.use(express.methodOverride());
 app.use(express.cookieParser());
 
 app.configure('development', function() {
-  setup_redis('redis://localhost:6379');
+  redis = setup_redis('redis://localhost:6379');
 
   app.use(express.static(__dirname + '/public'));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
@@ -46,7 +50,7 @@ app.configure('development', function() {
 });
 
 app.configure('production', function() {
-  setup_redis(process.env.REDISTOGO_URL);
+  redis = setup_redis(process.env.REDISTOGO_URL);
 
   var oneYear = 365 * 24 * 3600 * 1000; // milliseconds
   app.use(express.static(__dirname + '/public', { maxAge: oneYear }));

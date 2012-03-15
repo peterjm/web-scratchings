@@ -36,7 +36,7 @@ LineSet.prototype.append = function(vals) {
     that.clear_line();
   }
   else {
-    that.redis.rpush(that.key, vals);
+    that.redis.rpush(that.key, vals, LineSet.printError);
   }
   return this;
 };
@@ -72,6 +72,11 @@ LineSet.all = function(n, redis, callback) {
     var linesets = _.map(keys, function(k) { return new LineSet(k, redis, true); });
     callback(linesets);
   });
+};
+LineSet.printError = function(err, reply) {
+  if (err) {
+    console.log("LineSet error: "+err);
+  }
 };
 
 exports.LineSet = LineSet;
