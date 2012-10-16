@@ -2,9 +2,7 @@ var express = require('express');
 var _ = require('underscore')._;
 var LineSet = require('./lineset').LineSet;
 var RedisStore = require('connect-redis')(express);
-var ALLOWED_CORS_ORIGINS = [
-  'http://prtest.quietbabylon.com'
-];
+var ALLOWED_CORS_ORIGINS = process.env.ARTSY_ALLOWED_CORS_ORIGINS.split(',');
 var MAX_LINES = 100;
 var redis;
 
@@ -149,4 +147,3 @@ var port = process.env.PORT || 3000;
 app.listen(port, function() {
   console.log("Listening on " + port);
 });
-
