@@ -2,9 +2,13 @@ var express = require('express');
 var _ = require('underscore')._;
 var LineSet = require('./lineset').LineSet;
 var RedisStore = require('connect-redis')(express);
-var ALLOWED_CORS_ORIGINS = process.env.ARTSY_ALLOWED_CORS_ORIGINS.split(',');
+var ALLOWED_CORS_ORIGINS = [];
 var MAX_LINES = 100;
 var redis;
+
+if (process.env.ARTSY_ALLOWED_CORS_ORIGINS) {
+  ALLOWED_CORS_ORIGINS = process.env.ARTSY_ALLOWED_CORS_ORIGINS.split(',');
+}
 
 function setup_redis(redis_url) {
   return require('redis-url').createClient(redis_url);

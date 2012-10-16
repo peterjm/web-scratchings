@@ -2,6 +2,7 @@
   "name": "web-scratchings",
   "version": "0.0.1",
   "dependencies": {
+    "node": "4.10",
     "express": "2.x",
     "ejs": "0.6.x",
     "redis": "0.7.x",
