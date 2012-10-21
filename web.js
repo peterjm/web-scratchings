@@ -37,6 +37,7 @@ app.use(express.cookieParser());
 
 app.configure('development', function() {
   redis = setup_redis('redis://localhost:6379');
+  LineSet.redis = redis;
 
   app.use(express.static(__dirname + '/public'));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
@@ -52,6 +53,7 @@ app.configure('development', function() {
 
 app.configure('production', function() {
   redis = setup_redis(process.env.REDISTOGO_URL);
+  LineSet.redis = redis;
 
   var oneYear = 365 * 24 * 3600 * 1000; // milliseconds
   app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
@@ -106,7 +108,7 @@ app.get('/lines.json', function(req, res) {
   res.contentType('json');
   var cls = current_line_set(req.session);
   cls.points(function(current_points) {
-    LineSet.all(MAX_LINES, redis, function(linesets) {
+    LineSet.all(MAX_LINES, function(linesets) {
       linesets = _.reject(linesets, function(l) { return l.equals(cls); });
       if (linesets.length == 0) {
         var points = {
@@ -143,7 +145,7 @@ app.post('/lines.json', function(req, res) {
 });
 
 app.delete('/lines', function(req, res) {
-  LineSet.clear(redis);
+  LineSet.clear();
   res.send(''); // render nothing
 });
 

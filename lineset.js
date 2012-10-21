@@ -1,9 +1,9 @@
 var _ = require('underscore')._;
 
-function LineSet(k, redis, skip_clear_line) {
+function LineSet(k, skip_clear_line) {
   this.k = k;
   this.key = 'points_' + k;
-  this.redis = redis;
+  this.redis = this.constructor.redis;
 
   var that = this;
   that.redis.zrevrank(that.constructor.key, k, function(err, rank) {
@@ -52,24 +52,24 @@ LineSet.prototype.equals = function(other) {
 };
 
 LineSet.key = 'points_keys';
-LineSet.clear = function(redis) {
-  this.all(null, redis, function(linesets) {
+LineSet.redis = null;
+LineSet.clear = function() {
+  this.all(null, function(linesets) {
     _.each(linesets, function(s){
       s.clear();
     });
   });
-  redis.del(this.key);
+  this.redis.del(this.key);
 };
-LineSet.all_keys = function(n, redis, callback) {
-  var that = this;
+LineSet.all_keys = function(n, callback) {
   n = (n==null) ? -1 : n;
-  redis.zrevrange(that.key, 0, n, function(err, keys) {
+  this.redis.zrevrange(this.key, 0, n, function(err, keys) {
     callback(keys);
   });
 };
-LineSet.all = function(n, redis, callback) {
-  this.all_keys(n, redis, function(keys) {
-    var linesets = _.map(keys, function(k) { return new LineSet(k, redis, true); });
+LineSet.all = function(n, callback) {
+  this.all_keys(n, function(keys) {
+    var linesets = _.map(keys, function(k) { return new LineSet(k, true); });
     callback(linesets);
   });
 };
