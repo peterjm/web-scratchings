@@ -1,11 +1,5 @@
 var _ = require('underscore')._;
 
-function printError(err, reply) {
-  if (err) {
-    console.log("LineSet error: "+err);
-  }
-};
-
 function each(arr, operation, after) {
   var count = 0;
   _.each(arr, function(elem) {
@@ -51,7 +45,9 @@ LineSet.prototype.append = function(vals, callback) {
   that.redis.rpush(that.key, vals, function(err, reply) {
     if (err) {
       LineSet.oldest(function(o) {
-        o.clear();
+        o.clear(function() {
+          that.append(vals, callback);
+        });
       });
     } else {
       if (callback) { callback(); }
