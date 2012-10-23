@@ -55,7 +55,7 @@ LineSet.prototype.points = function(callback) {
 };
 LineSet.prototype.append = function(vals, callback) {
   var that = this;
-  if (true) {
+  if (false) {
     that.redis.rpush(that.key, vals, function(err, reply) {
       if (err) {
         LineSet.oldest(function(o) {
@@ -90,7 +90,7 @@ LineSet.prototype.append = function(vals, callback) {
 };
 LineSet.prototype.clear_line = function() {
   var that = this;
-  return that.append(null, function() { that.append(null); });
+  //return that.append(null, function() { that.append(null); });
 };
 LineSet.prototype.clear = function(callback) {
   var that = this;
