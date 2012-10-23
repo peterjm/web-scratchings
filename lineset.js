@@ -55,7 +55,7 @@ LineSet.prototype.points = function(callback) {
 };
 LineSet.prototype.append = function(vals, callback) {
   var that = this;
-  if (false) {
+  if (true) {
     that.redis.rpush(that.key, vals, function(err, reply) {
       if (err) {
         LineSet.oldest(function(o) {
