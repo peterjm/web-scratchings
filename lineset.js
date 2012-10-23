@@ -1,6 +1,6 @@
 var _ = require('underscore')._;
 
-function each(arr, operation, after) {
+function parallel_each(arr, operation, after) {
   var count = 0;
   _.each(arr, function(elem) {
     count += 1;
@@ -9,6 +9,19 @@ function each(arr, operation, after) {
       if (count == 0) { after(); }
     });
   });
+}
+
+function sequential_each(arr, operation, after) {
+  var n = -1;
+  var do_operation = function() {
+    n += 1;
+    if (n < arr.length) {
+      operation(arr[n], do_operation);
+    } else {
+      after();
+    }
+  };
+  do_operation();
 }
 
 function LineSet(k, skip_clear_line) {
@@ -42,17 +55,37 @@ LineSet.prototype.points = function(callback) {
 };
 LineSet.prototype.append = function(vals, callback) {
   var that = this;
-  that.redis.rpush(that.key, vals, function(err, reply) {
-    if (err) {
-      LineSet.oldest(function(o) {
-        o.clear(function() {
-          that.append(vals, callback);
+  if (false) {
+    that.redis.rpush(that.key, vals, function(err, reply) {
+      if (err) {
+        LineSet.oldest(function(o) {
+          o.clear(function() {
+            that.append(vals, callback);
+          });
         });
-      });
-    } else {
-      if (callback) { callback(); }
+      } else {
+        if (callback) { callback(); }
+      }
+    });
+  } else {
+    if (vals instanceof Array) {
+      sequential_each(
+        vals,
+        function(i, c) {
+          that.append(i, c);
+        },
+        function() {
+          that.clear_line();
+          if (callback) { callback(); }
+        }
+      )
     }
-  });
+    else {
+      that.redis.rpush(that.key, vals, function() {
+        if (callback) { callback(); }
+      });
+    }
+  }
   return this;
 };
 LineSet.prototype.clear_line = function() {
@@ -76,7 +109,7 @@ LineSet.redis = null;
 LineSet.clear = function() {
   var that = this;
   that.all(function(linesets) {
-    each(linesets, function(s, c) { s.clear(c); }, function() { that.redis.del(that.key); })
+    parallel_each(linesets, function(s, c) { s.clear(c); }, function() { that.redis.del(that.key); })
   });
 };
 LineSet.oldest = function(callback) {
