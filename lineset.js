@@ -11,19 +11,6 @@ function parallel_each(arr, operation, after) {
   });
 }
 
-function sequential_each(arr, operation, after) {
-  var n = -1;
-  var do_operation = function() {
-    n += 1;
-    if (n < arr.length) {
-      operation(arr[n], do_operation);
-    } else {
-      after();
-    }
-  };
-  do_operation();
-}
-
 function LineSet(k, skip_clear_line) {
   this.k = k;
   this.key = 'points_' + k;
@@ -55,51 +42,40 @@ LineSet.prototype.points = function(callback) {
 };
 LineSet.prototype.append = function(vals, callback) {
   var that = this;
-  if (true) {
-    that.redis.rpush(that.key, vals, function(err, reply) {
-      if (err) {
-        console.log(err);
-        LineSet.oldest(function(o) {
-          o.clear(function() {
-            that.append(vals, callback);
-          });
-        });
-      } else {
-        if (callback) { callback(); }
-      }
-    });
-  } else {
-    if (vals instanceof Array) {
-      sequential_each(
-        vals,
-        function(i, c) {
-          that.append(i, c);
-        },
-        function() {
-          that.clear_line();
-          if (callback) { callback(); }
-        }
-      )
-    }
-    else {
-      that.redis.rpush(that.key, vals, function() {
-        if (callback) { callback(); }
-      });
-    }
+  //that.redis.rpush(that.key, vals, function(err, reply) {
+  //  if (err) {
+  //    LineSet.oldest(function(o) {
+  //      o.clear(function() {
+  //        that.append(vals, callback);
+  //      });
+  //    });
+  //  } else {
+  //    if (callback) { callback(); }
+  //  }
+  //});
+  if (vals instanceof Array) {
+    _.each(vals, function(i) { that.append(i); });
+    that.clear_line();
+  }
+  else {
+    that.redis.rpush(that.key, vals, function(){});
   }
   return this;
 };
 LineSet.prototype.clear_line = function() {
-  var that = this;
+  //var that = this;
   //return that.append(null, function() { that.append(null); });
+  return this.append(null).append(null);
 };
 LineSet.prototype.clear = function(callback) {
-  var that = this;
-  that.redis.zrem(that.constructor.key, that.k, function(err, response) {
-    that.redis.del(that.key, function(err, response) {
-      if (callback) { callback(); }
-    });
-  });
+  //var that = this;
+  //that.redis.zrem(that.constructor.key, that.k, function(err, response) {
+  //  that.redis.del(that.key, function(err, response) {
+  //    if (callback) { callback(); }
+  //  });
+  //});
+  this.redis.del(this.key);
+  this.redis.zrem(this.constructor.key, this.k);
 };
 LineSet.prototype.equals = function(other) {
   return this.key === other.key;
@@ -108,10 +84,16 @@ LineSet.prototype.equals = function(other) {
 LineSet.key = 'points_keys';
 LineSet.redis = null;
 LineSet.clear = function() {
-  var that = this;
-  that.all(function(linesets) {
-    parallel_each(linesets, function(s, c) { s.clear(c); }, function() { that.redis.del(that.key); })
+  //var that = this;
+  //that.all(function(linesets) {
+  //  parallel_each(linesets, function(s, c) { s.clear(c); }, function() { that.redis.del(that.key); })
+  //});
+  this.all(function(linesets) {
+    _.each(linesets, function(s){
+      s.clear();
+    });
   });
+  this.redis.del(this.key);
 };
 LineSet.oldest = function(callback) {
   this.redis.zrange(this.key, 0, 0, function(err, keys) {
