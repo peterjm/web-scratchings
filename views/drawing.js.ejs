@@ -104,9 +104,7 @@ function draw_line(x1, y1, x2, y2, thickness, ctxt) {
 
 function insert_canvases() {
   canvas = insert_canvas('canvas');
-  old_canvas = insert_canvas('old-canvas', function($canvas){
-    $canvas.css({'z-index': '-1'});
-  });
+  old_canvas = insert_canvas('old-canvas');
 }
 
 function insert_canvas(id, callback) {
