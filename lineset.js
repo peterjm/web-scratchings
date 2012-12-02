@@ -16,14 +16,14 @@ function LineSet(k, skip_clear_line) {
   this.key = 'points_' + k;
   this.redis = this.constructor.redis;
 
-  var that = this;
-  that.redis.zrevrank(that.constructor.key, k, function(err, rank) {
+  var self = this;
+  self.redis.zrevrank(self.constructor.key, k, function(err, rank) {
     if (rank == null) {
-      that.redis.zadd(that.constructor.key, Date.now(), k, function() {
+      self.redis.zadd(self.constructor.key, Date.now(), k, function() {
         if (!skip_clear_line) {
-          that.redis.llen(that.key, function(err, len) {
+          self.redis.llen(self.key, function(err, len) {
             if (len <= 0) {
-              that.clear_line();
+              self.clear_line();
             }
           });
         }
@@ -33,20 +33,20 @@ function LineSet(k, skip_clear_line) {
 }
 
 LineSet.prototype.points = function(callback) {
-  var that = this;
-  that.redis.llen(that.key, function(err, len) {
-    that.redis.lrange(that.key, 0, len, function(err, points) {
+  var self = this;
+  self.redis.llen(self.key, function(err, len) {
+    self.redis.lrange(self.key, 0, len, function(err, points) {
       callback(points);
     });
   });
 };
 LineSet.prototype.append = function(vals, callback) {
-  var that = this;
-  //that.redis.rpush(that.key, vals, function(err, reply) {
+  var self = this;
+  //self.redis.rpush(self.key, vals, function(err, reply) {
   //  if (err) {
   //    LineSet.oldest(function(o) {
   //      o.clear(function() {
-  //        that.append(vals, callback);
+  //        self.append(vals, callback);
   //      });
   //    });
   //  } else {
@@ -54,23 +54,23 @@ LineSet.prototype.append = function(vals, callback) {
   //  }
   //});
   if (vals instanceof Array) {
-    _.each(vals, function(i) { that.append(i); });
-    that.clear_line();
+    _.each(vals, function(i) { self.append(i); });
+    self.clear_line();
   }
   else {
-    that.redis.rpush(that.key, vals, function(){});
+    self.redis.rpush(self.key, vals, function(){});
   }
   return this;
 };
 LineSet.prototype.clear_line = function() {
-  //var that = this;
-  //return that.append(null, function() { that.append(null); });
+  //var self = this;
+  //return self.append(null, function() { self.append(null); });
   return this.append(null).append(null);
 };
 LineSet.prototype.clear = function(callback) {
-  //var that = this;
-  //that.redis.zrem(that.constructor.key, that.k, function(err, response) {
-  //  that.redis.del(that.key, function(err, response) {
+  //var self = this;
+  //self.redis.zrem(self.constructor.key, self.k, function(err, response) {
+  //  self.redis.del(self.key, function(err, response) {
   //    if (callback) { callback(); }
   //  });
   //});
@@ -84,9 +84,9 @@ LineSet.prototype.equals = function(other) {
 LineSet.key = 'points_keys';
 LineSet.redis = null;
 LineSet.clear = function() {
-  //var that = this;
-  //that.all(function(linesets) {
-  //  parallel_each(linesets, function(s, c) { s.clear(c); }, function() { that.redis.del(that.key); })
+  //var self = this;
+  //self.all(function(linesets) {
+  //  parallel_each(linesets, function(s, c) { s.clear(c); }, function() { self.redis.del(self.key); })
   //});
   this.all(function(linesets) {
     _.each(linesets, function(s){
