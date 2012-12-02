@@ -11,6 +11,19 @@ function parallel_each(arr, operation, after) {
   });
 }
 
+function sequential_each(arr, operation, after) {
+  var n = -1;
+  var do_operation = function() {
+    n += 1;
+    if (n < arr.length) {
+      operation(arr[n], do_operation);
+    } else {
+      after();
+    }
+  };
+  do_operation();
+}
+
 function LineSet(k, skip_clear_line) {
   this.k = k;
   this.key = 'points_' + k;
@@ -40,42 +53,43 @@ LineSet.prototype.points = function(callback) {
     });
   });
 };
-LineSet.prototype.append = function(vals, callback) {
+LineSet.prototype.add_points = function(vals, callback) {
   var self = this;
-  //self.redis.rpush(self.key, vals, function(err, reply) {
-  //  if (err) {
-  //    LineSet.oldest(function(o) {
-  //      o.clear(function() {
-  //        self.append(vals, callback);
-  //      });
-  //    });
-  //  } else {
-  //    if (callback) { callback(); }
-  //  }
-  //});
-  if (vals instanceof Array) {
-    _.each(vals, function(i) { self.append(i); });
-    self.clear_line();
-  }
-  else {
-    self.redis.rpush(self.key, vals, function(){});
-  }
-  return this;
+  sequential_each(
+    vals,
+    function(i, c) {
+      self.append(i, c);
+    },
+    function() {
+      self.clear_line(callback);
+    }
+  );
 };
-LineSet.prototype.clear_line = function() {
-  //var self = this;
-  //return self.append(null, function() { self.append(null); });
-  return this.append(null).append(null);
+LineSet.prototype.append = function(val, callback) {
+  var self = this;
+  self.redis.rpush(self.key, val, function(err, reply) {
+    if (err) {
+      LineSet.oldest(function(o) {
+        o.clear(function() {
+          self.append(val, callback);
+        });
+      });
+    } else {
+      if (callback) { callback(); }
+    }
+  });
+};
+LineSet.prototype.clear_line = function(callback) {
+  var self = this;
+  return self.append(null, function() { self.append(null, callback); });
 };
 LineSet.prototype.clear = function(callback) {
-  //var self = this;
-  //self.redis.zrem(self.constructor.key, self.k, function(err, response) {
-  //  self.redis.del(self.key, function(err, response) {
-  //    if (callback) { callback(); }
-  //  });
-  //});
-  this.redis.del(this.key);
-  this.redis.zrem(this.constructor.key, this.k);
+  var self = this;
+  self.redis.zrem(self.constructor.key, self.k, function(err, response) {
+    self.redis.del(self.key, function(err, response) {
+      if (callback) { callback(); }
+    });
+  });
 };
 LineSet.prototype.equals = function(other) {
   return this.key === other.key;
@@ -84,16 +98,14 @@ LineSet.prototype.equals = function(other) {
 LineSet.key = 'points_keys';
 LineSet.redis = null;
 LineSet.clear = function() {
-  //var self = this;
-  //self.all(function(linesets) {
-  //  parallel_each(linesets, function(s, c) { s.clear(c); }, function() { self.redis.del(self.key); })
-  //});
-  this.all(function(linesets) {
-    _.each(linesets, function(s){
-      s.clear();
-    });
+  var self = this;
+  self.all(function(linesets) {
+    parallel_each(
+      linesets,
+      function(s, c) { s.clear(c); },
+      function() { self.redis.del(self.key); }
+    );
   });
-  this.redis.del(this.key);
 };
 LineSet.oldest = function(callback) {
   this.redis.zrange(this.key, 0, 0, function(err, keys) {

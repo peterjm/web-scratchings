@@ -140,7 +140,7 @@ app.get('/lines.json', function(req, res) {
 
 app.post('/lines.json', function(req, res) {
   var points = JSON.parse(req.body.points);
-  current_line_set(req.session).append(points);
+  current_line_set(req.session).add_points(points);
   res.send(''); // render nothing
 });
 
