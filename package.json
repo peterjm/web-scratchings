@@ -2,7 +2,7 @@
   "name": "web-scratchings",
   "version": "0.0.1",
   "engines": {
-    "node": "0.6.20"
+    "node": "8.6.0"
   },
   "dependencies": {
     "express": "2.x",
